@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Quantock Paving Ltd Document Generator</title>
+  <!-- Include html2canvas, jsPDF, and EmailJS libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/emailjs-com@2/dist/email.min.js"></script>
+  <style>
+    /* Global Styles */
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f2f5;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    /* Header Banner (for screen only) */
+    .header-banner {
+      width: 100%;
+      height: 150px;
+      background: linear-gradient(135deg, #004080, #0073e6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 2em;
+      font-weight: bold;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    /* Form Styles */
+    form fieldset {
+      border: 1px solid #ccc;
+      margin-bottom: 15px;
+      padding: 10px;
+      border-radius: 5px;
+    }
+    form fieldset legend {
+      font-weight: bold;
+      color: #004080;
+    }
+    form label {
+      display: inline-block;
+      width: 140px;
+      vertical-align: top;
+      margin-top: 6px;
+    }
+    form input[type="text"],
+    form input[type="number"],
+    form textarea {
+      width: calc(100% - 160px);
+      padding: 8px;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    form textarea { resize: vertical; }
+    /* Table Styles */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    table, th, td { border: 1px solid #ddd; }
+    th, td { padding: 10px; text-align: left; }
+    th { background: #f7f7f7; }
+    /* Swoosh Design */
+    .swoosh {
+      width: 100%;
+      height: 80px;
+      background: url('swoosh.png') no-repeat center;
+      background-size: cover;
+      margin-bottom: 20px;
+    }
+    /* Invoice/Quote Preview Styles */
+    #invoice-preview {
+      display: none;
+      margin-top: 20px;
+      padding: 20px;
+      border: 1px solid #ddd;
+      background: #fff;
+      border-radius: 8px;
+    }
+    /* Enhanced Invoice Header Design */
+    .invoice-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      background: linear-gradient(135deg, #00509E, #00A8E8);
+      padding: 20px;
+      border-radius: 8px 8px 0 0;
+      color: #fff;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      margin-bottom: 20px;
+    }
+    .company-info {
+      text-align: center;
+      flex: 1;
+    }
+    /* Company name directly above the logo */
+    .company-info h3 {
+      margin: 0 0 5px 0;
+    }
+    /* Website link styling */
+    .company-info a {
+      color: #fff;
+      text-decoration: underline;
+      font-size: 0.9em;
+    }
+    /* Circular company logo */
+    .company-info img {
+      max-width: 120px;
+      display: block;
+      margin: 10px auto 5px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+    .invoice-meta {
+      text-align: right;
+      flex: 1;
+      min-width: 200px;
+    }
+    .invoice-meta p { margin: 5px 0; }
+    #preview-client-details { text-align: right; margin-top: 10px; }
+    /* Review Logos Section (Reviews Only) */
+    .review-logos {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 30px;
+      margin: 20px 0;
+    }
+    .review-logo {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .review-logo img {
+      max-width: 60px;
+      margin-bottom: 5px;
+    }
+    .review-logo .rating {
+      color: gold;
+      font-size: 1.2em;
+    }
+    .invoice-total {
+      text-align: right;
+      font-size: 1.2em;
+      margin-top: 20px;
+      font-weight: bold;
+    }
+    button {
+      padding: 10px 20px;
+      margin-top: 10px;
+      cursor: pointer;
+      background: #004080;
+      border: none;
+      color: #fff;
+      border-radius: 4px;
+      font-size: 1em;
+    }
+    button:hover { background: #003060; }
+    /* Footer Styles */
+    .doc-footer {
+      background: #004080;
+      color: #fff;
+      padding: 12px;
+      text-align: center;
+      border-radius: 0 0 8px 8px;
+      margin-top: 20px;
+      font-size: 0.9em;
+    }
+    .doc-footer p { margin: 5px 0; }
+    .footer-social-logos {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-top: 10px;
+    }
+    .footer-social-logos img { max-width: 40px; }
+    /* Hide unwanted elements when printing */
+    @media print {
+      #invoice-form, .no-print { display: none !important; }
+      #invoice-preview { margin: 0; padding: 0; border: none; box-shadow: none; }
+    }
+    /* Make the Description and Price boxes in the items table wider */
+    #items-table textarea,
+    #items-table input[type="number"] {
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header Banner (for screen only; hidden in PDF/Print) -->
+    <div class="header-banner no-print">
+      Quantock Paving Ltd Document Generator
+    </div>
+    
+    <!-- Form Section -->
+    <form id="invoice-form">
+      <fieldset>
+        <legend>Company Details</legend>
+        <label for="company-name">Company Name:</label>
+        <input type="text" id="company-name" name="companyName" value="Quantock Paving Ltd" required><br>
+        <label for="company-address">Company Address:</label>
+        <input type="text" id="company-address" name="companyAddress" value="Red Lane Stretcholt TA64SR" required><br>
+        <label for="company-website">Website:</label>
+        <input type="text" id="company-website" name="companyWebsite" value="www.quantockpaving.co.uk" required>
+      </fieldset>
+      <fieldset>
+        <legend>Document Type</legend>
+        <label for="invoice-type">
+          <input type="radio" id="invoice-type" name="documentType" value="Invoice" checked>
+          Invoice
+        </label>
+        <label for="quote-type">
+          <input type="radio" id="quote-type" name="documentType" value="Quote">
+          Quote
+        </label>
+      </fieldset>
+      <fieldset>
+        <legend>Client Details</legend>
+        <label for="client-name">Client Name:</label>
+        <input type="text" id="client-name" name="clientName" placeholder="Client Name" required><br>
+        <label for="client-address">Client Address:</label>
+        <input type="text" id="client-address" name="clientAddress" placeholder="Client Address" required>
+      </fieldset>
+      <fieldset>
+        <legend>Document Items</legend>
+        <table id="items-table">
+          <thead>
+            <tr>
+              <th>Description</th>
+              <th>Price (£)</th>
+            </tr>
+          </thead>
+          <tbody id="items-body">
+            <tr>
+              <td>
+                <textarea name="itemDescription" placeholder="Item Description (one per line)" rows="2"></textarea>
+              </td>
+              <td>
+                <input type="number" name="itemPrice" placeholder="Price" value="0" step="0.01">
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <button type="button" id="add-item">Add Item</button>
+      </fieldset>
+      <fieldset>
+        <legend>Additional Notes</legend>
+        <textarea id="notes" name="notes" placeholder="Enter any additional notes here..." rows="4"></textarea>
+      </fieldset>
+      <button type="button" id="generate-invoice">Generate Document</button>
+    </form>
+    
+    <!-- Invoice/Quote Preview Section -->
+    <div id="invoice-preview">
+      <!-- Swoosh Design at the Top -->
+      <div class="swoosh"></div>
+      <h2 id="preview-document-type"></h2>
+      <div class="invoice-header">
+        <div class="company-info">
+          <!-- Company Name and Website in the header -->
+          <h3 id="preview-company-name">Quantock Paving Ltd</h3>
+          <p id="preview-company-website">
+            <a href="http://www.quantockpaving.co.uk" target="_blank">www.quantockpaving.co.uk</a>
+          </p>
+          <img src="Quantock Paving Ltd.png" alt="Quantock Paving Ltd Logo">
+        </div>
+        <div class="invoice-meta">
+          <p><strong>Date:</strong> <span id="preview-date"></span></p>
+          <p><strong id="preview-doc-num-label">Invoice #:</strong> <span id="preview-invoice-number"></span></p>
+          <!-- Customer Details appear below the invoice number -->
+          <div id="preview-client-details">
+            <p id="preview-client-name"></p>
+            <p id="preview-client-address"></p>
+          </div>
+        </div>
+      </div>
+      <div class="review-logos">
+        <div class="review-logo">
+          <img src="Google.png" alt="Google Logo">
+          <div class="rating">★★★★★</div>
+        </div>
+        <div class="review-logo">
+          <img src="Bark_Logo800-200.png" alt="Bark Logo">
+          <div class="rating">★★★★★</div>
+        </div>
+        <div class="review-logo">
+          <img src="Yell_CMYK.png" alt="Yell Logo">
+          <div class="rating">★★★★★</div>
+        </div>
+      </div>
+      <hr>
+      <table id="invoice-items">
+        <thead>
+          <tr>
+            <th>Description</th>
+            <th>Price (£)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Dynamically added items will appear here -->
+        </tbody>
+      </table>
+      <div class="invoice-total">
+        <h3>Total: £<span id="preview-total">0.00</span></h3>
+      </div>
+      <!-- Buttons (hidden when printing) -->
+      <button onclick="window.print();" class="no-print">Print Document</button>
+      <button type="button" id="save-pdf" class="no-print">Save as PDF</button>
+      <button type="button" id="send-email" class="no-print">Send as PDF via Email</button>
+      <!-- Footer Section -->
+      <footer class="doc-footer">
+        <p>Quantock Paving Ltd · Red Lane Stretcholt TA64SR</p>
+        <p>Phone: 07379046388 · Email: quantockpaving@gmail.com</p>
+        <p id="preview-notes"></p>
+        <p>Thank you for your business!</p>
+        <div class="footer-social-logos">
+          <img src="tiktok.png" alt="TikTok Logo">
+          <img src="facebook.png" alt="Facebook Logo">
+          <img src="Instagram.png" alt="Instagram Logo">
+        </div>
+      </footer>
+    </div>
+  </div>
+  
+  <script>
+    // Initialize EmailJS (replace with your actual EmailJS user ID)
+    emailjs.init('YOUR_USER_ID');
+
+    // Add new item row
+    document.getElementById('add-item').addEventListener('click', function() {
+      const tbody = document.getElementById('items-body');
+      const newRow = document.createElement('tr');
+      newRow.innerHTML = `
+        <td>
+          <textarea name="itemDescription" placeholder="Item Description (one per line)" rows="2"></textarea>
+        </td>
+        <td>
+          <input type="number" name="itemPrice" placeholder="Price" value="0" step="0.01">
+        </td>
+      `;
+      tbody.appendChild(newRow);
+    });
+
+    // Generate preview from form data
+    document.getElementById('generate-invoice').addEventListener('click', function() {
+      const documentType = document.querySelector('input[name="documentType"]:checked').value;
+      document.getElementById('preview-document-type').textContent = documentType;
+      document.getElementById('preview-doc-num-label').textContent = documentType === 'Invoice' ? "Invoice #:" : "Quote #:";
+
+      const companyName = document.getElementById('company-name').value;
+      document.getElementById('preview-company-name').textContent = companyName;
+
+      // Update the website preview based on the form input
+      const companyWebsite = document.getElementById('company-website').value;
+      document.getElementById('preview-company-website').innerHTML = '<a href="http://' + companyWebsite + '" target="_blank">' + companyWebsite + '</a>';
+
+      const clientName = document.getElementById('client-name').value;
+      const clientAddress = document.getElementById('client-address').value;
+      document.getElementById('preview-client-name').textContent = clientName;
+      document.getElementById('preview-client-address').textContent = clientAddress;
+
+      const currentDate = new Date().toLocaleDateString();
+      document.getElementById('preview-date').textContent = currentDate;
+      document.getElementById('preview-invoice-number').textContent = Math.floor(Math.random() * 1000000);
+
+      const invoiceItemsBody = document.getElementById('invoice-items').querySelector('tbody');
+      invoiceItemsBody.innerHTML = '';
+      let grandTotal = 0;
+      const itemRows = document.querySelectorAll('#items-body tr');
+      itemRows.forEach(function(row) {
+        const descriptionInput = row.querySelector('textarea[name="itemDescription"]').value;
+        const lines = descriptionInput.split(/\r?\n/).filter(line => line.trim() !== '');
+        let descriptionHTML = lines.length > 1 
+          ? '<ul style="margin:0; padding-left:20px;"><li>' + lines.join('</li><li>') + '</li></ul>'
+          : descriptionInput;
+        const price = parseFloat(row.querySelector('input[name="itemPrice"]').value) || 0;
+        grandTotal += price;
+        const newRow = document.createElement('tr');
+        newRow.innerHTML = `<td>${descriptionHTML}</td><td>£${price.toFixed(2)}</td>`;
+        invoiceItemsBody.appendChild(newRow);
+      });
+      document.getElementById('preview-total').textContent = grandTotal.toFixed(2);
+
+      const notesText = document.getElementById('notes').value;
+      document.getElementById('preview-notes').textContent = notesText ? "Notes: " + notesText : "";
+
+      document.getElementById('invoice-preview').style.display = 'block';
+    });
+
+    // Save as PDF
+    document.getElementById('save-pdf').addEventListener('click', function() {
+      // Temporarily hide header banner for PDF (if desired)
+      const headerBanner = document.querySelector('.header-banner');
+      const originalDisplay = headerBanner ? headerBanner.style.display : null;
+      if (headerBanner) headerBanner.style.display = 'none';
+
+      html2canvas(document.getElementById('invoice-preview')).then(canvas => {
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const imgData = canvas.toDataURL('image/png');
+        const imgProps = pdf.getImageProperties(imgData);
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        pdf.save('document.pdf');
+        if (headerBanner) headerBanner.style.display = originalDisplay;
+      });
+    });
+
+    // Email as PDF
+    document.getElementById('send-email').addEventListener('click', function() {
+      // Temporarily hide header banner for PDF (if desired)
+      const headerBanner = document.querySelector('.header-banner');
+      const originalDisplay = headerBanner ? headerBanner.style.display : null;
+      if (headerBanner) headerBanner.style.display = 'none';
+
+      html2canvas(document.getElementById('invoice-preview')).then(canvas => {
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const imgData = canvas.toDataURL('image/png');
+        const imgProps = pdf.getImageProperties(imgData);
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        const pdfData = pdf.output('datauristring');
+        const pdfBase64 = pdfData.split(',')[1];
+
+        const subject = document.getElementById('preview-document-type').textContent + " - #" +
+                        document.getElementById('preview-invoice-number').textContent;
+        let body = "Date: " + document.getElementById('preview-date').textContent + "\n\n" +
+                   "Company: " + document.getElementById('preview-company-name').textContent + "\n\n" +
+                   "Bill To: " + document.getElementById('preview-client-name').textContent + "\n" +
+                   "Address: " + document.getElementById('preview-client-address').textContent + "\n\n" +
+                   "Items:\n";
+        const rows = document.querySelectorAll('#invoice-items tbody tr');
+        rows.forEach(function(row) {
+          const cells = row.querySelectorAll('td');
+          body += cells[0].textContent + " - " + cells[1].textContent + "\n";
+        });
+        body += "\nTotal: £" + document.getElementById('preview-total').textContent + "\n\n";
+        const notes = document.getElementById('preview-notes').textContent;
+        if (notes) { body += notes + "\n\n"; }
+        body += "Thank you for your business!";
+        
+        const templateParams = {
+          subject: subject,
+          message: body,
+          attachment: pdfBase64
+        };
+        
+        emailjs.send('YOUR_SERVICE_ID', 'YOUR_TEMPLATE_ID', templateParams)
+          .then(function(response) {
+            alert('Email sent successfully!');
+          }, function(error) {
+            alert('Failed to send email: ' + JSON.stringify(error));
+          })
+          .finally(() => { if (headerBanner) headerBanner.style.display = originalDisplay; });
+      });
+    });
+  </script>
+</body>
+</html>
